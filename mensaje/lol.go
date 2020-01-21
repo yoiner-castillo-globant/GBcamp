@@ -2,6 +2,6 @@ package mensaje
 
 import "fmt"
 
-func Mensaje() {
-	fmt.Println("Desde otro modulo")
+func Mensaje(dato string) {
+	fmt.Println("Información: ", dato)
 }
