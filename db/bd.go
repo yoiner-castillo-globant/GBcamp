@@ -1,26 +1,37 @@
-package bd
+package db
 
-var datos = make(map[string]int)
+import "fmt"
 
-func Create(key string, data int) string {
+//import "strconv"
 
+var datos = make(map[string]interface{})
+
+func Create(key string, data interface{}) string {
 	datos[key] = data
-
-	return "ingresado"
+	conv := fmt.Sprintf("%v", data)
+	return ("Ingresado la información[" + conv + "] en la llave [" + key + "]")
 }
 
-func Retrieve(key string) int {
-
-	dato := datos[key]
-
-	return dato
+//strconv.Itoa( convierto int a string
+func Retrieve(key string) interface{} {
+	//dato := datos[key]
+	var x interface{} = datos[key]
+	return x
 }
 
-func Update(key string, data int) string {
+func Update(key string, data interface{}) string {
 	datos[key] = data
-	return "ingresado"
+	upda := fmt.Sprintf("%v", data)
+	return ("actualizado [" + upda + "] en la llave [" + key + "]")
 }
 
-func Delete(key string) {
+func Delete(key string) string {
 	delete(datos, key)
+	return ("Eliminando.. indice[" + key + "]")
+}
+
+func PrintDatos() {
+	fmt.Println(datos)
+	//	str := fmt.Sprintf("%v", datos)
+	//fmt.Println(str) // "[1 2 3]"
 }
