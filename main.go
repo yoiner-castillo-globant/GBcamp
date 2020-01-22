@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-
+	"github.com/yoiner-castillo-globant/GBcamp/testing"
 	"github.com/yoiner-castillo-globant/GBcamp/db"
 	"github.com/yoiner-castillo-globant/GBcamp/mensaje"
 )
@@ -11,6 +11,8 @@ import (
 
 func main() {
 
+	//testing.TestCreate()
+	/*
 	mensaje.Mensaje(db.Create("1", "123"))
 	mensaje.Mensaje(db.Create("3", "3423"))
 	mensaje.Mensaje(db.Create("55", "125443"))
@@ -26,6 +28,7 @@ func main() {
 	db.PrintDatos()
 	mensaje.Mensaje("Dato Eliminado::> " + db.Delete("55"))
 	db.PrintDatos()
+	*/
 
 	//mensaje.Mensaje(bd.Create("1", 123))
 	/*
