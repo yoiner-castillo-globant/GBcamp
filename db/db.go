@@ -6,30 +6,37 @@ import "fmt"
 
 var Datos = make(map[string]interface{})
 
-func Create(key string, data interface{}) string {
-	Datos[key] = data
-	conv := fmt.Sprintf("%v", data)
-	return ("Ingresado la información[" + conv + "] en la llave [" + key + "]")
+func Create(key string, data interface{}) bool {
+	if Datos[key] == nil {
+		Datos[key] = data
+		return true
+	}
+	return false
 }
 
 //strconv.Itoa( convierto int a string
 func Retrieve(key string) interface{} {
-	//dato := datos[key]
-	var x interface{} = Datos[key]
-	return x
+	return Datos[key]
 }
 
-func Update(key string, data interface{}) string {
-	Datos[key] = data
-	upda := fmt.Sprintf("%v", data)
-	return ("actualizado [" + upda + "] en la llave [" + key + "]")
+func Update(key string, data interface{}) bool {
+	if Datos[key] != nil {
+		Datos[key] = data
+		return true
+	}
+	return false
 }
 
-func Delete(key string) string {
-	delete(Datos, key)
-	return ("Eliminando.. indice[" + key + "]")
+func Delete(key string) bool{
+	if Datos[key] != nil{
+		delete(Datos, key)
+		return true
+	}
+	return false
 }
 
 func PrintDatos() {
-	fmt.Println(Datos)
+	if len(Datos) > 0 {
+		fmt.Println(Datos)
+	}
 }

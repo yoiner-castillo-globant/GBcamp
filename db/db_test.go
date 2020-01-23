@@ -9,7 +9,8 @@ import (
 func TestCreate(t *testing.T) {
 	db.Create("test1", "50")
 	length := len(db.Datos)
-	if length == 1 {
+
+	if length > 1 {
 		t.Errorf("Create was incorrect, got: %d, want: %d.", length, 1)
 	}
 }
@@ -37,10 +38,12 @@ func TestUpdate(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	db.Create("test4", "Eliminar Test")
+	cantidadAnterior := len(db.Datos)
 	db.Delete("test4")
-	 cantidad := len(db.Datos)
+	cantidadPosterior := len(db.Datos)
+	cantidadAnterior--
 
-	if cantidad == 0 {
-		t.Errorf("Update was incorrect, got: %d, want: %d.", 0, cantidad)
+	if cantidadAnterior != cantidadPosterior {
+		t.Errorf("Update was incorrect, got: %d, want: %d.", cantidadAnterior, cantidadPosterior)
 	}
 }

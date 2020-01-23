@@ -1,4 +1,0 @@
-Prueba3;45
-Prueba2;cadena
-testing;wihtman
-testing2;residente

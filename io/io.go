@@ -1,45 +1,28 @@
 package io
 
 import (
-	"bufio"
-	"fmt"
+	"encoding/json"
+	"github.com/yoiner-castillo-globant/GBcamp/db"
+	"io/ioutil"
 	"log"
-	"os"
 )
 
-/*
-func Escribir() {
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		fmt.Println(scanner.Text()) // Println will add back the final '\n'
-	}
-	if err := scanner.Err(); err != nil {
-		fmt.Fprintln(os.Stderr, "reading standard input:", err)
-	}
-}*/
-
-func EscribirArchivo(info interface{}, nombreArchivo string) {
-	file, err := os.Create("./io/" + nombreArchivo + ".txt")
+func SaveMapInFile() {
+	jsonString, _ := json.Marshal(db.Datos)
+	err := ioutil.WriteFile("./io/Info.txt", jsonString, 0644)
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
-	defer file.Close()
-	data := fmt.Sprintf("%v", info)
-	file.WriteString(data)
 }
 
-func LeerArchivo(nombreArchivo string) {
-	file, err := os.Open("./io/" + nombreArchivo + ".txt")
+func ReadMapFromFile() {
+	datosComoBytes, err := ioutil.ReadFile("./io/Info.txt")
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	scanner := bufio.NewScanner(file) // default line by line
-	for scanner.Scan() {
-		fmt.Println(scanner.Text())
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+	//	fmt.Println("[Informativo, no error] No existe el archivo a leer...")
+	} else {
+		err = json.Unmarshal(datosComoBytes, &db.Datos)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
