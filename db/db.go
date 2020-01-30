@@ -9,18 +9,16 @@ import (
 var DATA = make(map[string]interface{})
 var mu sync.Mutex
 
-func Create(key string, value interface{}) (bool, error) {
-	response := false
+func Create(key string, value interface{})  error {
 	mu.Lock()
 	if DATA[key] == nil {
 		DATA[key] = value
-		response = true
 	} else {
 		mu.Unlock()
-		return false, errors.New("Error, cannot be created, the key already exists")
+		return  errors.New("Error, cannot be created, the key already exists")
 	}
 	mu.Unlock()
-	return response, nil
+	return  nil
 }
 
 
@@ -32,32 +30,28 @@ func Retrieve(key string) (interface{}, error) {
 	return DATA[key], nil
 }
 
-func Update(key string, value interface{}) (bool, error) {
-	response := false
+func Update(key string, value interface{})  error {
 	mu.Lock()
 	if DATA[key] != nil {
 		DATA[key] = value
-		response = true
 	} else {
 		mu.Unlock()
-		return false, errors.New("No information was found with the key received")
+		return errors.New("No information was found with the key received")
 	}
 	mu.Unlock()
-	return response, nil
+	return nil
 }
 
-func Delete(key string) (bool, error) {
-	response := false
+func Delete(key string)  error {
 	mu.Lock()
 	if DATA[key] != nil {
 		delete(DATA, key)
-		response = true
 	}else{
 		mu.Unlock()
-		return false, errors.New("No information was found with the key received")
+		return errors.New("No information was found with the key received")
 	}
 	mu.Unlock()
-	return response, nil
+	return nil
 }
 
 func PrintDATA() {

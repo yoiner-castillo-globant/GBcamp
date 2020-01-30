@@ -8,7 +8,7 @@ import (
 )
 
 func SaveMapInFile() {
-	jsonString, _ := json.Marshal(db.Datos)
+	jsonString, _ := json.Marshal(db.DATA)
 	err := ioutil.WriteFile("./io/Info.txt", jsonString, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -17,10 +17,8 @@ func SaveMapInFile() {
 
 func ReadMapFromFile() {
 	datosComoBytes, err := ioutil.ReadFile("./io/Info.txt")
-	if err != nil {
-	//	fmt.Println("[Informativo, no error] No existe el archivo a leer...")
-	} else {
-		err = json.Unmarshal(datosComoBytes, &db.Datos)
+	if err == nil {
+		err = json.Unmarshal(datosComoBytes, &db.DATA)
 		if err != nil {
 			panic(err)
 		}
