@@ -9,6 +9,8 @@ import (
 func main() {
 io.ReadMapFromFile()
 db.PrintDatos()
+
+
 db.Create("23", 23445)
 db.Create("532", "Polo")
 db.Create("Jhoi", "temporal")
