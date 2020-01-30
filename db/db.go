@@ -6,76 +6,64 @@ import (
 	"sync"
 )
 
-//import "strconv"
-
-var Datos = make(map[string]interface{})
+var DATA = make(map[string]interface{})
 var mu sync.Mutex
 
-//func Create(key <-chan string, data <-chan interface{}) bool {
-
-func Create(key string, data interface{}) (bool, error) {
-	creo := false
+func Create(key string, value interface{}) (bool, error) {
+	response := false
 	mu.Lock()
-	//llave := <-key
-	if Datos[key] == nil {
-		Datos[key] = data
-		creo = true
+	if DATA[key] == nil {
+		DATA[key] = value
+		response = true
 	} else {
 		mu.Unlock()
-		return false, errors.New("Error, No se puede crear, la clave ya existe")
+		return false, errors.New("Error, cannot be created, the key already exists")
 	}
 	mu.Unlock()
-	return creo, nil
+	return response, nil
 }
 
-//strconv.Itoa( convierto int a string
+
 func Retrieve(key string) (interface{}, error) {
-	//func Retrieve(key <-chan string) interface{} {
 
-	if Datos[key] == nil {
-		return nil, errors.New("No se encontró información con la clave recibida")
+	if DATA[key] == nil {
+		return nil, errors.New("No information was found with the key received")
 	}
-	return Datos[key], nil
+	return DATA[key], nil
 }
 
-func Update(key string, data interface{}) (bool, error) {
-	//func Update(key <-chan string, data <-chan interface{}) bool {
-
-	actualizo := false
+func Update(key string, value interface{}) (bool, error) {
+	response := false
 	mu.Lock()
-	//llave := <-key
-	if Datos[key] != nil {
-		Datos[key] = data
-		actualizo = true
+	if DATA[key] != nil {
+		DATA[key] = value
+		response = true
 	} else {
 		mu.Unlock()
-		return false, errors.New("No se encontró información con la clave recibida")
+		return false, errors.New("No information was found with the key received")
 	}
 	mu.Unlock()
-	return actualizo, nil
+	return response, nil
 }
 
 func Delete(key string) (bool, error) {
-	//func Delete(key <-chan string) bool {
-
-	elimino := false
+	response := false
 	mu.Lock()
-	//llave := <-key
-	if Datos[key] != nil {
-		delete(Datos, key)
-		elimino = true
+	if DATA[key] != nil {
+		delete(DATA, key)
+		response = true
 	}else{
 		mu.Unlock()
-		return false, errors.New("No se encontró información con la clave recibida")
+		return false, errors.New("No information was found with the key received")
 	}
 	mu.Unlock()
-	return elimino, nil
+	return response, nil
 }
 
-func PrintDatos() {
+func PrintDATA() {
 	mu.Lock()
-	if len(Datos) > 0 {
-		fmt.Println(Datos)
+	if len(DATA) > 0 {
+		fmt.Println(DATA)
 	}
 	mu.Unlock()
 }
