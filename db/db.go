@@ -3,61 +3,103 @@ package db
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"sync"
+	"encoding/json"
+	"log"
 )
 
-var DATA = make(map[string]interface{})
-var mu sync.Mutex
-
-func Create(key string, value interface{})  error {
-	mu.Lock()
-	if DATA[key] == nil {
-		DATA[key] = value
-	} else {
-		mu.Unlock()
-		return  errors.New("Error, cannot be created, the key already exists")
-	}
-	mu.Unlock()
-	return  nil
+type iDB interface {
+	Create(string, interface{}) error
+	Retrieve(string) (interface{}, error)
+	Update(string, interface{}) error
+	Delete(string) error
+	PrintDATA()
+	SaveMapInFile()
+	ReadMapFromFile()
 }
 
+type MemoryDB struct {
+	data map[string]interface{}
+	mtx  sync.Mutex
+}
 
-func Retrieve(key string) (interface{}, error) {
+func NewMemoryDB() *MemoryDB {
+	totalMemory := make(map[string]interface{})
+	return &MemoryDB{data: totalMemory}
+}
 
-	if DATA[key] == nil {
+func (md *MemoryDB) Len() int {
+	return len(md.data)
+}
+
+func (md *MemoryDB) Create(key string, value interface{}) error {
+	md.mtx.Lock()
+
+	if md.data[key] == nil {
+		md.data[key] = value
+	} else {
+		md.mtx.Unlock()
+		return errors.New("Error, cannot be created, the key already exists")
+	}
+	md.mtx.Unlock()
+	return nil
+}
+
+func (md *MemoryDB) Retrieve(key string) (interface{}, error) {
+
+	if md.data[key] == nil {
 		return nil, errors.New("No information was found with the key received")
 	}
-	return DATA[key], nil
+	return md.data[key], nil
 }
 
-func Update(key string, value interface{})  error {
-	mu.Lock()
-	if DATA[key] != nil {
-		DATA[key] = value
+func (md *MemoryDB) Update(key string, value interface{}) error {
+	md.mtx.Lock()
+	if md.data[key] != nil {
+		md.data[key] = value
 	} else {
-		mu.Unlock()
+		md.mtx.Unlock()
 		return errors.New("No information was found with the key received")
 	}
-	mu.Unlock()
+	md.mtx.Unlock()
 	return nil
 }
 
-func Delete(key string)  error {
-	mu.Lock()
-	if DATA[key] != nil {
-		delete(DATA, key)
-	}else{
-		mu.Unlock()
+func (md *MemoryDB) Delete(key string) error {
+	md.mtx.Lock()
+	if md.data[key] != nil {
+		delete(md.data, key)
+	} else {
+		md.mtx.Unlock()
 		return errors.New("No information was found with the key received")
 	}
-	mu.Unlock()
+	md.mtx.Unlock()
 	return nil
 }
 
-func PrintDATA() {
-	mu.Lock()
-	if len(DATA) > 0 {
-		fmt.Println(DATA)
+func (md *MemoryDB) PrintDATA() {
+	md.mtx.Lock()
+	if len(md.data) > 0 {
+		fmt.Println(md.data)
 	}
-	mu.Unlock()
+	md.mtx.Unlock()
+}
+
+func (md *MemoryDB) SaveMapInFile() {
+	jsonString, _ := json.Marshal(md.data)
+	err := ioutil.WriteFile("./io/Info.txt", jsonString, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func (md *MemoryDB) ReadMapFromFile() {
+	datosComoBytes, err := ioutil.ReadFile("./io/Info.txt")
+	if err == nil {
+		err = json.Unmarshal(datosComoBytes, &md.data)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
