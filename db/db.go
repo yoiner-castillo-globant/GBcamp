@@ -36,7 +36,7 @@ func (md *MemoryDB) Len() int {
 func (md *MemoryDB) Create(key string, value interface{}) error {
 	md.mtx.Lock()
 
-	if md.data[key] == nil {
+	if md.data[key] == "" || md.data[key] == nil {
 		md.data[key] = value
 	} else {
 		md.mtx.Unlock()
@@ -47,7 +47,6 @@ func (md *MemoryDB) Create(key string, value interface{}) error {
 }
 
 func (md *MemoryDB) Retrieve(key string) (interface{}, error) {
-
 	if md.data[key] == nil {
 		return nil, errors.New("No information was found with the key received")
 	}
