@@ -1,15 +1,16 @@
 package db
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"sync"
-	"encoding/json"
 	"log"
+	"sync"
+	"github.com/yoiner-castillo-globant/GBcamp/constants/constants"	
 )
 
-type iDB interface {
+type IDB interface {
 	Create(string, interface{}) error
 	Retrieve(string) (interface{}, error)
 	Update(string, interface{}) error
@@ -34,8 +35,8 @@ func (md *MemoryDB) Len() int {
 }
 
 func (md *MemoryDB) Create(key string, value interface{}) error {
+	defer md.SaveMapInFile()
 	md.mtx.Lock()
-
 	if md.data[key] == "" || md.data[key] == nil {
 		md.data[key] = value
 	} else {
@@ -54,6 +55,7 @@ func (md *MemoryDB) Retrieve(key string) (interface{}, error) {
 }
 
 func (md *MemoryDB) Update(key string, value interface{}) error {
+	defer md.SaveMapInFile()
 	md.mtx.Lock()
 	if md.data[key] != nil {
 		md.data[key] = value
@@ -66,6 +68,7 @@ func (md *MemoryDB) Update(key string, value interface{}) error {
 }
 
 func (md *MemoryDB) Delete(key string) error {
+	defer md.SaveMapInFile()
 	md.mtx.Lock()
 	if md.data[key] != nil {
 		delete(md.data, key)
@@ -87,16 +90,16 @@ func (md *MemoryDB) PrintDATA() {
 
 func (md *MemoryDB) SaveMapInFile() {
 	jsonString, _ := json.Marshal(md.data)
-	err := ioutil.WriteFile("./io/Info.txt", jsonString, 0644)
+	err := ioutil.WriteFile(constants.FilePath, jsonString, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (md *MemoryDB) ReadMapFromFile() {
-	datosComoBytes, err := ioutil.ReadFile("./io/Info.txt")
+	dataLikeBytes, err := ioutil.ReadFile(constants.FilePath)
 	if err == nil {
-		err = json.Unmarshal(datosComoBytes, &md.data)
+		err = json.Unmarshal(dataLikeBytes, &md.data)
 		if err != nil {
 			panic(err)
 		}
