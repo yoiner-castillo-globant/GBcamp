@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/yoiner-castillo-globant/GBcamp/constants"
 	"io/ioutil"
 	"log"
 	"sync"
-	"github.com/yoiner-castillo-globant/GBcamp/constants/constants"	
 )
 
 type IDB interface {
@@ -82,7 +82,7 @@ func (md *MemoryDB) Delete(key string) error {
 
 func (md *MemoryDB) PrintDATA() {
 	md.mtx.Lock()
-	if len(md.data) > 0 {
+	if md.Len() > 0 {
 		fmt.Println(md.data)
 	}
 	md.mtx.Unlock()
@@ -90,18 +90,14 @@ func (md *MemoryDB) PrintDATA() {
 
 func (md *MemoryDB) SaveMapInFile() {
 	jsonString, _ := json.Marshal(md.data)
-	err := ioutil.WriteFile(constants.FilePath, jsonString, 0644)
-	if err != nil {
+	if err := ioutil.WriteFile(constants.FilePath, jsonString, 0644); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (md *MemoryDB) ReadMapFromFile() {
 	dataLikeBytes, err := ioutil.ReadFile(constants.FilePath)
-	if err == nil {
-		err = json.Unmarshal(dataLikeBytes, &md.data)
-		if err != nil {
-			panic(err)
-		}
+	if err = json.Unmarshal(dataLikeBytes, &md.data); err != nil {
+		panic(err)
 	}
 }

@@ -1,15 +1,19 @@
 package main
 
 import (
-	"github.com/yoiner-castillo-globant/GBcamp/db"
-	//"github.com/yoiner-castillo-globant/GBcamp/restful/cart"
+	//"github.com/yoiner-castillo-globant/GBcamp/db"
+	//"github.com/yoiner-castillo-globant/GBcamp/constants"
+	"github.com/yoiner-castillo-globant/GBcamp/restful/cart"
 )
 
 
 
 func main() {
-/*	icart := cart.CreateCart()
-	item1 := cart.Element{Id: 2, Title:"", Price:3.4, Amount:2}
+	icart := cart.CreateCart()
+
+	icart.AddItem(1, 3)
+	icart.PrintCart()
+	/*item1 := cart.Element{Id: 2, Title:"", Price:3.4, Amount:2}
 	item2 := cart.Element{3,"daa", 5.2,3}
 
 	items := []cart.Element{}
@@ -32,8 +36,10 @@ func main() {
 
 	icart.DeleteAllItems()
 	cart.PrintCart(icart.GetAllItems())*/
+	/*/
 
-	
+	constants.FilePath = "./io/Info.txt"
+
 		data := db.NewMemoryDB()
 		data.ReadMapFromFile()
 		data.PrintDATA()
@@ -45,6 +51,6 @@ func main() {
 		data.PrintDATA()
 		data.Delete("532")
 		data.PrintDATA()
-		
+		*/
 
 }
