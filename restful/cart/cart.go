@@ -4,21 +4,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/yoiner-castillo-globant/GBcamp/constants"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
-	"github.com/yoiner-castillo-globant/GBcamp/constants"
 )
 
 type ICart interface {
-	AddItems([]Element) error
-	AddItem(Element) error
-	GetAllItems() []Element
+	AddItem(int, int) error
+	GetAllItems() map[Element]int
 	ChangeItemAmount(int, int) error
 	DeleteItem(int)
 	DeleteAllItems()
 	PrintCart()
+	ReadBook(http.ResponseWriter, *http.Request)
 }
 
 type Cart struct {
@@ -27,15 +27,15 @@ type Cart struct {
 
 //Element _
 type Element struct {
-	Id     int     `json:"idItem"`
-	Title  string  `json:"titelItem"`
-	Price  float64 `json:"priceItem"`
+	Id    int     `json:"id"`
+	Title string  `json:"title"`
+	Price float64 `json:"price"`
 }
 
 type apiStruct struct {
-	Id    string	`json:"id"`
-	Title string	`json:"title"`
-	Price string	`json:"price"`
+	Id    string `json:"id"`
+	Title string `json:"title"`
+	Price string `json:"price"`
 }
 
 func CreateCart() *Cart {
@@ -43,30 +43,25 @@ func CreateCart() *Cart {
 	return &Cart{elements: items}
 }
 
-func (ct *Cart) AddItems(_items []Element) error {
-		ct.elements = append(ct.elements, _items...)
+func (ct *Cart) AddItem(_idProduct int, _amount int) error {
+	item := getElementFromApi(_idProduct)
+	ct.elements[item] = _amount
 	return nil
 }
 
-func (ct *Cart) AddItem(_id int, _amount int) error {
-	item := getItemFromApi(_id, _amount)
-	ct.elements = append(ct.elements, item)
-	return nil
-}
-
-func (ct *Cart) GetAllItems() []Element {
+func (ct *Cart) GetAllItems() map[Element]int {
 	return ct.elements
 }
+
 func (ct *Cart) ChangeItemAmount(_idkey int, _amount int) error {
 	changed := false
-	for i, item := range ct.elements {
-		if item.Id == _idkey {
-			element := item
-			element.Amount = _amount
-			ct.elements[i] = element
-			changed = true
-		}
+
+	item := ct.getElementFromMap(_idkey)
+	ct.elements[item] = _amount
+	if item.Id == 0 {
+		changed = false
 	}
+
 	if !changed {
 		return errors.New("Error, ChangeItemAmount, IdKey not found")
 	}
@@ -74,13 +69,8 @@ func (ct *Cart) ChangeItemAmount(_idkey int, _amount int) error {
 	return nil
 }
 func (ct *Cart) DeleteItem(_idkey int) {
-	var index int
-	for i, item := range ct.elements {
-		if item.Id == _idkey {
-			index = i
-		}
-	}
-	ct.elements = removeIndex(ct.elements, index)
+	item := ct.getElementFromMap(_idkey)
+	delete(ct.elements, item)
 }
 func (ct *Cart) DeleteAllItems() {
 	ct.elements = nil
@@ -88,13 +78,31 @@ func (ct *Cart) DeleteAllItems() {
 func (ct *Cart) PrintCart() {
 	fmt.Println(ct)
 }
-func PrintCart(_items []Element) {
-	fmt.Println(_items)
+
+func PrintCart(_data map[Element]int) {
+	fmt.Println(_data)
 }
 
-func getItemFromApi(_id int, _amount int) Element {
+func (ct *Cart) getElementFromMap(_idProduct int) Element {
+	for key := range ct.elements {
+		if key.Id == _idProduct {
+			return key
+		}
+	}
+	return Element{}
+}
+
+
+func (ct *Cart) ReadBook(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	fmt.Println("ALgo")
+    w.Write([]byte(`{"message": "get called"}`))
+}
+
+func getElementFromApi(_idProducto int) Element {
 	var product apiStruct
-	Url := (constants.ApiUrlProducts + "/" + strconv.Itoa(_id))
+	Url := (constants.ApiUrlProducts + "/" + strconv.Itoa(_idProducto))
 	var Client = &http.Client{Timeout: 10 * time.Second}
 	resp, err := Client.Get(Url)
 
@@ -105,9 +113,9 @@ func getItemFromApi(_id int, _amount int) Element {
 	json.Unmarshal(data, &product)
 
 	IdProduct, err := strconv.Atoi(product.Id)
-	PriceProduct, err := strconv.ParseFloat(product.Price, 32)	
+	PriceProduct, err := strconv.ParseFloat(product.Price, 32)
 
-	return Element{Id: IdProduct, Title: product.Title, Price:PriceProduct, Amount: _amount}
+	return Element{Id: IdProduct, Title: product.Title, Price: PriceProduct}
 }
 
 func removeIndex(s []Element, index int) []Element {

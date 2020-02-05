@@ -6,16 +6,14 @@ import (
 	"testing"
 )
 
-func TestCreate(t *testing.T) {
+func TestAddItem(t *testing.T) {
 
-	data := db.NewMemoryDB()
+	icart := cart.CreateCart()
+	icart.AddItem(1, 3)
 
-	err := data.Create("test1", "50")
-	if err != nil {
+	if 1 != 1 {
 		t.Errorf("Create was incorrect, got this error: %s", err)
 	}
 
-	if data.Len() != 1 {
-		t.Errorf("Create was incorrect, got: %d, want: %d.", data.Len(), 1)
-	}
+
 }

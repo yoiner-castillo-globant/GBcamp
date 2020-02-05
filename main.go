@@ -13,6 +13,17 @@ func main() {
 
 	icart.AddItem(1, 3)
 	icart.PrintCart()
+	icart.ChangeItemAmount(1,5)
+	icart.PrintCart()
+	
+
+	cart.PrintCart(icart.GetAllItems())
+	icart.AddItem(2, 7)
+icart.DeleteItem(1)
+icart.PrintCart()
+icart.DeleteAllItems()
+icart.PrintCart()
+
 	/*item1 := cart.Element{Id: 2, Title:"", Price:3.4, Amount:2}
 	item2 := cart.Element{3,"daa", 5.2,3}
 
