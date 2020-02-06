@@ -62,13 +62,13 @@ func (ct *Cart) ChangeItemAmount(_idkey string, _amount int) error {
 	if item.Id == "" {
 		changed = false
 	}
-
 	if !changed {
 		return errors.New("Error, ChangeItemAmount, IdKey not found")
 	}
 
 	return nil
 }
+
 func (ct *Cart) DeleteItem(_idkey string) {
 	item := ct.getElementFromMap(_idkey)
 	delete(ct.elements, item)
@@ -108,22 +108,74 @@ func encodeMap(_data map[Element]int) []responseStruct {
 	return items
 }
 
-func (ct *Cart) GetItems(w http.ResponseWriter, r *http.Request) {
+func (ct *Cart) WSGetItems(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	jsonString := encodeMap(ct.elements)
 	json.NewEncoder(w).Encode(jsonString)
 }
 
+ func (ct *Cart) WSChangeItemAmount(w http.ResponseWriter, r *http.Request) {
+ 	pathParams := mux.Vars(r)
+     w.Header().Set("Content-Type", "application/json")
+ 	w.WriteHeader(http.StatusOK)     
+	 IdElement := pathParams["articleId"] 
+	 
+	 amountElement := -1
+	 var err error
+	 if val, ok := pathParams["amount"]; ok {
+		amountElement, err = strconv.Atoi(val)
+		 if err != nil {
+			 w.WriteHeader(http.StatusInternalServerError)
+			 w.Write([]byte(`{"message": "expected  a number"}`))
+			 return
+		 }
+	 }
+	if ct.ChangeItemAmount(IdElement, amountElement) != nil{
+		json.NewEncoder(w).Encode("changed successfully")
+	}
+ }
 
-func getElementFromApi(_idProducto string) Element {
+ func (ct *Cart) WSDeleteItem(w http.ResponseWriter, r *http.Request) {
+	pathParams := mux.Vars(r)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)     
+	IdElement := pathParams["articleId"] 
+
+    ct.DeleteItem(IdElement)
+	json.NewEncoder(w).Encode("Deleted successfully")
+}
+
+func (ct *Cart) WSDeleteAllItems(w http.ResponseWriter, r *http.Request) {
+//	pathParams := mux.Vars(r)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)     
+//	IdElement := pathParams["articleId"] 
+    ct.DeleteAllItems()
+	json.NewEncoder(w).Encode("successfully removed")
+}
+
+func (ct *Cart) WSAddItem(w http.ResponseWriter, r *http.Request) {
+	pathParams := mux.Vars(r)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)     
+	IdElement := pathParams["articleId"] 
+	
+
+   if ct.AddItem(IdElement, 1) != nil{
+	   json.NewEncoder(w).Encode("Added successfully")
+   }
+}
+
+
+func getElementFromApi(_idProducto string) Element, error {
 	var product apiStruct
 	Url := constants.ApiUrlProducts + "/" + _idProducto
 	var Client = &http.Client{Timeout: 10 * time.Second}
 	resp, err := Client.Get(Url)
 
 	if err != nil {
-		panic(err.Error())
+		return nil, err.Error("Element not found...")
 	}
 	data, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(data, &product)
