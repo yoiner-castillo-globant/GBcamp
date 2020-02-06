@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"github.com/gorilla/mux"
 )
 
 type ICart interface {
@@ -27,9 +28,9 @@ type Cart struct {
 
 //Element _
 type Element struct {
-	Id    int     `json:"id"`
-	Title string  `json:"title"`
-	Price float64 `json:"price"`
+	Id    string     
+	Title string  
+	Price float64 
 }
 
 type apiStruct struct {
@@ -43,7 +44,7 @@ func CreateCart() *Cart {
 	return &Cart{elements: items}
 }
 
-func (ct *Cart) AddItem(_idProduct int, _amount int) error {
+func (ct *Cart) AddItem(_idProduct string, _amount int) error {
 	item := getElementFromApi(_idProduct)
 	ct.elements[item] = _amount
 	return nil
@@ -53,12 +54,12 @@ func (ct *Cart) GetAllItems() map[Element]int {
 	return ct.elements
 }
 
-func (ct *Cart) ChangeItemAmount(_idkey int, _amount int) error {
+func (ct *Cart) ChangeItemAmount(_idkey string, _amount int) error {
 	changed := false
 
 	item := ct.getElementFromMap(_idkey)
 	ct.elements[item] = _amount
-	if item.Id == 0 {
+	if item.Id == "" {
 		changed = false
 	}
 
@@ -68,7 +69,7 @@ func (ct *Cart) ChangeItemAmount(_idkey int, _amount int) error {
 
 	return nil
 }
-func (ct *Cart) DeleteItem(_idkey int) {
+func (ct *Cart) DeleteItem(_idkey string) {
 	item := ct.getElementFromMap(_idkey)
 	delete(ct.elements, item)
 }
@@ -83,7 +84,7 @@ func PrintCart(_data map[Element]int) {
 	fmt.Println(_data)
 }
 
-func (ct *Cart) getElementFromMap(_idProduct int) Element {
+func (ct *Cart) getElementFromMap(_idProduct string) Element {
 	for key := range ct.elements {
 		if key.Id == _idProduct {
 			return key
@@ -92,17 +93,32 @@ func (ct *Cart) getElementFromMap(_idProduct int) Element {
 	return Element{}
 }
 
-
-func (ct *Cart) ReadBook(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Println("ALgo")
-    w.Write([]byte(`{"message": "get called"}`))
+type responseStruct struct {
+	Id string
+	Title string
+	Price float64
+	Amount int
+}
+func encodeMap(_data map[Element]int) []responseStruct {
+	items := []responseStruct{}
+	for key, value := range _data {
+	item := responseStruct{Amount: value, Id:key.Id, Title: key.Title, Price: key.Price}
+	items = append(items, item )
+	}
+	return items
 }
 
-func getElementFromApi(_idProducto int) Element {
+func (ct *Cart) GetItems(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	jsonString := encodeMap(ct.elements)
+	json.NewEncoder(w).Encode(jsonString)
+}
+
+
+func getElementFromApi(_idProducto string) Element {
 	var product apiStruct
-	Url := (constants.ApiUrlProducts + "/" + strconv.Itoa(_idProducto))
+	Url := constants.ApiUrlProducts + "/" + _idProducto
 	var Client = &http.Client{Timeout: 10 * time.Second}
 	resp, err := Client.Get(Url)
 
@@ -112,10 +128,9 @@ func getElementFromApi(_idProducto int) Element {
 	data, _ := ioutil.ReadAll(resp.Body)
 	json.Unmarshal(data, &product)
 
-	IdProduct, err := strconv.Atoi(product.Id)
 	PriceProduct, err := strconv.ParseFloat(product.Price, 32)
 
-	return Element{Id: IdProduct, Title: product.Title, Price: PriceProduct}
+	return Element{Id: product.Id, Title: product.Title, Price: PriceProduct}
 }
 
 func removeIndex(s []Element, index int) []Element {
