@@ -5,62 +5,58 @@ import (
 	"errors"
 	"fmt"
 	"github.com/yoiner-castillo-globant/GBcamp/constants"
+	"github.com/yoiner-castillo-globant/GBcamp/structs"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
-	"github.com/gorilla/mux"
 )
 
 type ICart interface {
 	AddItem(int, int) error
-	GetAllItems() map[Element]int
+	GetAllItems() map[structs.Element]int
 	ChangeItemAmount(int, int) error
 	DeleteItem(int)
 	DeleteAllItems()
 	PrintCart()
-	ReadBook(http.ResponseWriter, *http.Request)
 }
-
 type Cart struct {
-	elements map[Element]int
-}
-
-//Element _
-type Element struct {
-	Id    string     
-	Title string  
-	Price float64 
-}
-
-type apiStruct struct {
-	Id    string `json:"id"`
-	Title string `json:"title"`
-	Price string `json:"price"`
+	Elements map[structs.Element]int
 }
 
 func CreateCart() *Cart {
-	items := make(map[Element]int)
-	return &Cart{elements: items}
+	items := make(map[structs.Element]int)
+	return &Cart{Elements: items}
 }
 
-func (ct *Cart) AddItem(_idProduct string, _amount int) error {
-	item := getElementFromApi(_idProduct)
-	ct.elements[item] = _amount
+
+func (ct *Cart) AddItem(idProduct string, amount int) error {
+
+	item, err := getElementFromApi(idProduct)
+	if err!= nil{
+		return err
+	}
+	ct.Elements[item] = amount
 	return nil
 }
 
-func (ct *Cart) GetAllItems() map[Element]int {
-	return ct.elements
+func (ct *Cart) GetAllItems() map[structs.Element]int {
+	return ct.Elements
 }
 
-func (ct *Cart) ChangeItemAmount(_idkey string, _amount int) error {
+func (ct *Cart) ChangeItemAmount(idkey string, amount int) error {
 	changed := false
 
-	item := ct.getElementFromMap(_idkey)
-	ct.elements[item] = _amount
-	if item.Id == "" {
+	item := ct.getElementFromMap(idkey)
+	fmt.Println(item)
+	if ct.Elements[item] == 0 {
 		changed = false
+	}else{
+		ct.Elements[item] = amount
+	}
+
+	if ct.Elements[item] == amount{
+		changed = true
 	}
 	if !changed {
 		return errors.New("Error, ChangeItemAmount, IdKey not found")
@@ -69,122 +65,55 @@ func (ct *Cart) ChangeItemAmount(_idkey string, _amount int) error {
 	return nil
 }
 
-func (ct *Cart) DeleteItem(_idkey string) {
-	item := ct.getElementFromMap(_idkey)
-	delete(ct.elements, item)
+func (ct *Cart) DeleteItem(idkey string) {
+	item := ct.getElementFromMap(idkey)
+	delete(ct.Elements, item)
 }
 func (ct *Cart) DeleteAllItems() {
-	ct.elements = nil
+	ct.Elements = CreateCart().Elements
 }
 func (ct *Cart) PrintCart() {
 	fmt.Println(ct)
 }
 
-func PrintCart(_data map[Element]int) {
-	fmt.Println(_data)
+func PrintCart(data map[structs.Element]int) {
+	fmt.Println(data)
 }
 
-func (ct *Cart) getElementFromMap(_idProduct string) Element {
-	for key := range ct.elements {
-		if key.Id == _idProduct {
+func (ct *Cart) getElementFromMap(idProduct string) structs.Element {
+	for key := range ct.Elements {
+		if key.Id == idProduct {
 			return key
 		}
 	}
-	return Element{}
+	return structs.Element{}
 }
 
-type responseStruct struct {
-	Id string
-	Title string
-	Price float64
-	Amount int
-}
-func encodeMap(_data map[Element]int) []responseStruct {
-	items := []responseStruct{}
-	for key, value := range _data {
-	item := responseStruct{Amount: value, Id:key.Id, Title: key.Title, Price: key.Price}
+func EncodeMap(data map[structs.Element]int) []structs.ResponseStruct {
+	items := []structs.ResponseStruct{}
+	for key, value := range data {
+	item := structs.ResponseStruct{Amount: value, Id:key.Id, Title: key.Title, Price: key.Price}
 	items = append(items, item )
 	}
 	return items
 }
 
-func (ct *Cart) WSGetItems(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	jsonString := encodeMap(ct.elements)
-	json.NewEncoder(w).Encode(jsonString)
-}
 
- func (ct *Cart) WSChangeItemAmount(w http.ResponseWriter, r *http.Request) {
- 	pathParams := mux.Vars(r)
-     w.Header().Set("Content-Type", "application/json")
- 	w.WriteHeader(http.StatusOK)     
-	 IdElement := pathParams["articleId"] 
-	 
-	 amountElement := -1
-	 var err error
-	 if val, ok := pathParams["amount"]; ok {
-		amountElement, err = strconv.Atoi(val)
-		 if err != nil {
-			 w.WriteHeader(http.StatusInternalServerError)
-			 w.Write([]byte(`{"message": "expected  a number"}`))
-			 return
-		 }
-	 }
-	if ct.ChangeItemAmount(IdElement, amountElement) != nil{
-		json.NewEncoder(w).Encode("changed successfully")
-	}
- }
-
- func (ct *Cart) WSDeleteItem(w http.ResponseWriter, r *http.Request) {
-	pathParams := mux.Vars(r)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)     
-	IdElement := pathParams["articleId"] 
-
-    ct.DeleteItem(IdElement)
-	json.NewEncoder(w).Encode("Deleted successfully")
-}
-
-func (ct *Cart) WSDeleteAllItems(w http.ResponseWriter, r *http.Request) {
-//	pathParams := mux.Vars(r)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)     
-//	IdElement := pathParams["articleId"] 
-    ct.DeleteAllItems()
-	json.NewEncoder(w).Encode("successfully removed")
-}
-
-func (ct *Cart) WSAddItem(w http.ResponseWriter, r *http.Request) {
-	pathParams := mux.Vars(r)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)     
-	IdElement := pathParams["articleId"] 
-	
-
-   if ct.AddItem(IdElement, 1) != nil{
-	   json.NewEncoder(w).Encode("Added successfully")
-   }
-}
-
-
-func getElementFromApi(_idProducto string) Element, error {
-	var product apiStruct
+func getElementFromApi(_idProducto string) (structs.Element, error) {
+	var product structs.ApiStruct
 	Url := constants.ApiUrlProducts + "/" + _idProducto
 	var Client = &http.Client{Timeout: 10 * time.Second}
-	resp, err := Client.Get(Url)
+	if resp, err := Client.Get(Url); err != nil{
+		return structs.Element{}, err
+	}else{
 
-	if err != nil {
-		return nil, err.Error("Element not found...")
+		data, _ := ioutil.ReadAll(resp.Body)
+		json.Unmarshal(data, &product)
 	}
-	data, _ := ioutil.ReadAll(resp.Body)
-	json.Unmarshal(data, &product)
-
-	PriceProduct, err := strconv.ParseFloat(product.Price, 32)
-
-	return Element{Id: product.Id, Title: product.Title, Price: PriceProduct}
+	PriceProduct, _ := strconv.ParseFloat(product.Price, 32)
+	return structs.Element{Id: product.Id, Title: product.Title, Price: PriceProduct}, nil
 }
 
-func removeIndex(s []Element, index int) []Element {
+func removeIndex(s []structs.Element, index int) []structs.Element {
 	return append(s[:index], s[index+1:]...)
 }
