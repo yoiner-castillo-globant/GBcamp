@@ -21,14 +21,14 @@ type ResponseStruct struct {
 }
 
 type ResponseNewCartWs struct {
-	CartId string `json:"cartId"`
+	CartId string `json:"CartId"`
 }
 
 type BadResponseAddItem struct {
-	Response string `json:"response"`
+	Response string `json:"Response"`
 }
 
 type RequestAddItem struct {
-	CartID    string `json:"cartID"`
-	IdElement string `json:"IdElement"`
+	CartID    string `json:"CartId"`
+	ArticleId string `json:"ArticleId"`
 }

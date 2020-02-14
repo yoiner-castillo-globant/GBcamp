@@ -14,7 +14,7 @@ import (
 var IManager = manager.New()
 
 type response struct {
-	cartId string
+	CartId string
 }
 
 func NewCart(w http.ResponseWriter, r *http.Request) {
@@ -23,41 +23,39 @@ func NewCart(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"cartId": "` + newId + `"}`))
-	// json.NewEncoder(w).Encode(`{"cartId": "`+ newId + `"}`)
+	w.Write([]byte(`{"CartId": "` + newId + `"}`))
+	// json.NewEncoder(w).Encode(`{"CartId": "`+ newId + `"}`)
 }
 
 func AddItem(w http.ResponseWriter, r *http.Request) {
-	CartId := r.FormValue("cartId")
-	IdElement := r.FormValue("articleId")
+	CartId := r.FormValue("CartId")
+	ArticleId := r.FormValue("ArticleId")
 	pathParams := mux.Vars(r)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	
 	if CartId == "" {
-		CartId = pathParams["cartId"]
+		CartId = pathParams["CartId"]
 	}
-	if IdElement == "" {
-		IdElement = pathParams["articleId"]
+	if ArticleId == "" {
+		ArticleId = pathParams["ArticleId"]
 	}
 
-	// fmt.Println("cartID::> ", CartId)
-	//  fmt.Println("IdElement: ", IdElement)
-
 	if CartId == "" {
-		w.Write([]byte(`{"response": "you need to send an cartId"}`))
-	} else if IdElement == "" {
-		w.Write([]byte(`{"response": "you need to send an articleId"}`))
+		w.Write([]byte(`{"Response": "you need to send an CartId"}`))
+	} else if ArticleId == "" {
+		w.Write([]byte(`{"Response": "you need to send an ArticleId"}`))
 	} else {
 		
-		err := IManager.AddItem(CartId, IdElement);
+		err := IManager.AddItem(CartId, ArticleId);
 		
 		if  err != nil {
 			
-			w.Write([]byte(`{"response": "you need to send an articleId valid"}`))
+			w.Write([]byte(`{"Response": "you need to send an ArticleId valid"}`))
 		}
 		
-		w.Write([]byte(`{"response": "Added successfully"}`))
+		w.Write([]byte(`{"Response": "Added successfully"}`))
 		//json.NewEncoder(w).Encode(`{"response": "Added successfully"}`)
 	}
 }
@@ -66,7 +64,7 @@ func GetItems(w http.ResponseWriter, r *http.Request) {
 	pathParams := mux.Vars(r)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	CartId := pathParams["cartId"]
+	CartId := pathParams["CartId"]
 	json.NewEncoder(w).Encode(IManager.GetItems(CartId))
 }
 
@@ -74,8 +72,8 @@ func ChangeAmountItem(w http.ResponseWriter, r *http.Request) {
 	pathParams := mux.Vars(r)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	CartId := pathParams["cartId"]
-	IdElement := pathParams["articleId"]
+	CartId := pathParams["CartId"]
+	ArticleId := pathParams["ArticleId"]
 	Amount := -1
 	var err error
 	if val, ok := pathParams["amount"]; ok {
@@ -86,7 +84,7 @@ func ChangeAmountItem(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if err = IManager.ChangeItemAmount(CartId, IdElement, Amount); err != nil {
+	if err = IManager.ChangeItemAmount(CartId, ArticleId, Amount); err != nil {
 		w.Write([]byte(`{"error": "` + err.Error() + `"}`))
 	} else {
 		w.Write([]byte(`{"done": "Added successfully"}`))
@@ -97,8 +95,8 @@ func DeleteItem(w http.ResponseWriter, r *http.Request) {
 	pathParams := mux.Vars(r)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	CartId := pathParams["cartId"]
-	ArticleId := pathParams["articleId"]
+	CartId := pathParams["CartId"]
+	ArticleId := pathParams["ArticleId"]
 	IManager.DeleteItem(CartId, ArticleId)
 	w.Write([]byte(`{"done": "The product was eliminated"}`))
 }
@@ -107,7 +105,7 @@ func DeleteAllItems(w http.ResponseWriter, r *http.Request) {
 	pathParams := mux.Vars(r)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	CartId := pathParams["cartId"]
+	CartId := pathParams["CartId"]
 	IManager.DeleteAll(CartId)
 	w.Write([]byte(`{"done": "The products were eliminated"}`))
 }
@@ -121,12 +119,15 @@ func LoadServer() {
 
 func LoadRouter() *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/NewCart", NewCart)
-	r.HandleFunc("/cart/{cartId}/article/{articleId}", AddItem).Methods("POST")
-	r.HandleFunc("/AddItem", AddItem).Methods("POST")
-	r.HandleFunc("/cart/{cartId}/articles", GetItems).Methods("GET")
-	r.HandleFunc("/cart/{cartId}/article/{articleId}/amount/{amount}", ChangeAmountItem).Methods("PUT")
-	r.HandleFunc("/cart/{cartId}/article/{articleId}", DeleteItem).Methods("DELETE")
-	r.HandleFunc("/cart/{cartId}", DeleteAllItems).Methods("DELETE")
+	r.Headers("Content-Type", "application/json",
+		  "X-Requested-With", "XMLHttpRequest")
+		  
+	r.HandleFunc("/NewCart", NewCart).Methods(http.MethodGet)
+	r.HandleFunc("/cart/{CartId}/article/{ArticleId}", AddItem).Methods(http.MethodPost)
+	r.HandleFunc("/AddItem", AddItem).Methods(http.MethodPost)
+	r.HandleFunc("/cart/{CartId}/articles", GetItems).Methods(http.MethodGet)
+	r.HandleFunc("/cart/{CartId}/article/{ArticleId}/amount/{amount}", ChangeAmountItem).Methods(http.MethodPut)
+	r.HandleFunc("/cart/{CartId}/article/{ArticleId}", DeleteItem).Methods(http.MethodDelete)
+	r.HandleFunc("/cart/{CartId}", DeleteAllItems).Methods(http.MethodDelete)
 	return r
 }

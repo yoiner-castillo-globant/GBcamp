@@ -100,7 +100,7 @@ func TestAddItem(t *testing.T) {
 		{name: "With out {cartId}", cartId: "", values: "4", err: "you need to send an cartId"},
 		{name: "With out {articleId}", cartId: IdCart, values: "", err: "you need to send an articleId"},
 		{name: "With out {articleId} valid", cartId: IdCart, values: "x", err: "you need to send an articleId valid"},
-		{name: "Normal", cartId: IdCart, values: "2"},
+		{name: "Successfull", cartId: IdCart, values: "2"},
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
