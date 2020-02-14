@@ -2,6 +2,7 @@ package cart
 
 import (
 	"encoding/json"
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/yoiner-castillo-globant/GBcamp/constants"
@@ -33,6 +34,7 @@ func CreateCart() *Cart {
 func (ct *Cart) AddItem(idProduct string, amount int) error {
 
 	item, err := getElementFromApi(idProduct)
+	
 	if err!= nil{
 		return err
 	}
@@ -48,7 +50,6 @@ func (ct *Cart) ChangeItemAmount(idkey string, amount int) error {
 	changed := false
 
 	item := ct.getElementFromMap(idkey)
-	fmt.Println(item)
 	if ct.Elements[item] == 0 {
 		changed = false
 	}else{
@@ -103,12 +104,18 @@ func getElementFromApi(_idProducto string) (structs.Element, error) {
 	var product structs.ApiStruct
 	Url := constants.ApiUrlProducts + "/" + _idProducto
 	var Client = &http.Client{Timeout: 10 * time.Second}
-	if resp, err := Client.Get(Url); err != nil{
+	resp, err := Client.Get(Url)
+
+	if err != nil{
 		return structs.Element{}, err
 	}else{
-
 		data, _ := ioutil.ReadAll(resp.Body)
-		json.Unmarshal(data, &product)
+		if string(bytes.TrimSpace(data)) == "undefined"{
+			return structs.Element{},  errors.New("undefined") 
+		}else{
+			json.Unmarshal(data, &product)
+		}
+		
 	}
 	PriceProduct, _ := strconv.ParseFloat(product.Price, 32)
 	return structs.Element{Id: product.Id, Title: product.Title, Price: PriceProduct}, nil

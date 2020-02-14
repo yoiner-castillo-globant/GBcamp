@@ -26,9 +26,12 @@ func New() *Admin {
 func (a *Admin) AddCart(keyCart string) {	
 	a.Carts[keyCart] = cart.CreateCart()
 }
-func (a *Admin) AddItem(keyCart string, keyProduct string) {	
+func (a *Admin) AddItem(keyCart string, keyProduct string) error{	
 	icart := a.Carts[keyCart] 
-	icart.AddItem(keyProduct,1)
+	if err := icart.AddItem(keyProduct,1); err!= nil{
+		return err
+	}
+	return nil
 }
 func (a *Admin) GetItems(keyCart string) []structs.ResponseStruct{	
 	icart := a.Carts[keyCart] 
