@@ -2,45 +2,65 @@ package db
 
 import (
 	"fmt"
-	"testing"
 	"github.com/yoiner-castillo-globant/GBcamp/db"
+	"testing"
 )
 
 func TestCreate(t *testing.T) {
-	db.Create("test1", "50")
-	length := len(db.Datos)
-	if length == 1 {
-		t.Errorf("Create was incorrect, got: %d, want: %d.", length, 1)
+
+	data := db.NewMemoryDB()
+
+	if err := data.Create("test1", "50"); err != nil {
+		t.Errorf("Create was incorrect, got this error: %s", err)
+	}
+	if data.Len() != 1 {
+		t.Errorf("Create was incorrect, got: %d, want: %d.", data.Len(), 1)
 	}
 }
 
 func TestRetrieve(t *testing.T) {
-	db.Create("test2", "Funciona")
-	var x interface{} = db.Retrieve("test2")
-	dato := fmt.Sprintf("%v", x)
+	data := db.NewMemoryDB()
+	data.Create("test2", "Works")
 
-	if dato != "Funciona" {
-		t.Errorf("Retrieve was incorrect, got: %s, want: %s.", dato, "Funciona")
+	x, err := data.Retrieve("test2")
+	value := fmt.Sprintf("%v", x)
+
+	if err != nil {
+		t.Errorf("Retrieve was incorrect, got this error: %s, ", err)
+	}
+	if value != "Works" {
+		t.Errorf("Retrieve was incorrect, got: %s, want: %s.", value, "Funciona")
 	}
 }
 
 func TestUpdate(t *testing.T) {
-	db.Create("test3", "Funciona")
-	db.Update("test3", "Funciona2")
-	var x interface{} = db.Retrieve("test3")
+	data := db.NewMemoryDB()
+
+	data.Create("test3", "works")
+	err := data.Update("test3", "works2")
+	x, _ := data.Retrieve("test3")
 	dato := fmt.Sprintf("%v", x)
 
-	if dato != "Funciona2" {
-		t.Errorf("Update was incorrect, got: %s, want: %s.", dato, "Funciona2")
+	if err != nil {
+		t.Errorf("Retrieve was incorrect, got this error: %s, ", err)
+	}
+	if dato != "works2" {
+		t.Errorf("Update was incorrect, got: %s, want: %s.", dato, "works2")
 	}
 }
 
 func TestDelete(t *testing.T) {
-	db.Create("test4", "Eliminar Test")
-	db.Delete("test4")
-	 cantidad := len(db.Datos)
+	data := db.NewMemoryDB()
 
-	if cantidad == 0 {
-		t.Errorf("Update was incorrect, got: %d, want: %d.", 0, cantidad)
+	data.Create("test4", "Deleting Test")
+	previousAmount := data.Len()
+	if err := data.Delete("test4"); err != nil{
+		t.Errorf("Update was incorrect, got this error: %s", err)
+	}
+
+	postAmount := data.Len()
+	previousAmount--
+	if previousAmount != postAmount {
+		t.Errorf("Update was incorrect, got: %d, want: %d.", previousAmount, postAmount)
 	}
 }
