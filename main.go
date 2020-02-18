@@ -1,11 +1,9 @@
 package main
 
 import (
-	"github.com/yoiner-castillo-globant/GBcamp/restful/ws"
+	"github.com/yoiner-castillo-globant/GBcamp/App/ApiRest"
 )
 
-
-
-func main() {
-	ws.LoadServer()
+func main(){
+	ApiRest.TurnOn()
 }
