@@ -1,1 +1,0 @@
-{"23":"una cadena","Jhoi":"temporal"}
