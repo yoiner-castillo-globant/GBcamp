@@ -33,12 +33,14 @@ func GetItemsCartEP(w http.ResponseWriter, req *http.Request) {
 
 func validateAddItemRequest(w http.ResponseWriter, cartId, articleId string) bool {
 	if cartId == "" {
+		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"Response": "you need to send an CartId"}`))
 		return false
 	}
 
 	if articleId == "" {
-		w.Write([]byte(`{"Response": "you need to send an ArticleId"}`))
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"Response": "you need to send an id"}`))
 		return false
 	}
 
@@ -52,13 +54,13 @@ func AddItemCartEP(w http.ResponseWriter, req *http.Request) {
 	_ = json.NewDecoder(req.Body).Decode(&article)
 
 	if !validateAddItemRequest(w, cartId, article.ArticleId) {
-		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	if err := IControl.AddItem(cartId, article.ArticleId); err != nil {
-		w.Write([]byte(`{"Response": "you need to send a valid ArticleId"}`))
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"Response": "you need to send a valid id"}`))
+	
 		return
 	}
 
@@ -76,7 +78,7 @@ func ChangeAmountItemEP(w http.ResponseWriter, req *http.Request) {
 	if CartId == "" {
 		w.Write([]byte(`{"Response": "you need to send an CartId"}`))
 	} else if article.ArticleId == "" {
-		w.Write([]byte(`{"Response": "you need to send an existing id in the cart "}`))
+		w.Write([]byte(`{"Response": "you need to send an existing id in the cart"}`))
 	} else if article.Amount == 0 {
 		w.Write([]byte(`{"Response": "you need to send the product´s quantity like quantity. quantity != 0 "}`))
 	} else {

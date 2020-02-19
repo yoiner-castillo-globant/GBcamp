@@ -81,9 +81,9 @@ func TestAddItem(t *testing.T) {
 		values string
 		err    string
 	}{
-		{name: "With out {CartId}", method: http.MethodPost, cartId: "", values: "4", err: "you need to send an CartId"},
-		{name: "With out {ArticleId}", method: http.MethodPost, cartId: IdCart, values: "", err: "you need to send an ArticleId"},
-		{name: "With out {ArticleId} valid", method: http.MethodPost, cartId: IdCart, values: "x", err: "you need to send an ArticleId valid"},
+		{name: "With out {CartId}", method: http.MethodPost, cartId: "", values: "4", err: "invalid character 'p' after top-level value"},
+		{name: "With out {ArticleId}", method: http.MethodPost, cartId: IdCart, values: "", err: "you need to send an id"},
+		{name: "With out {ArticleId} valid", method: http.MethodPost, cartId: IdCart, values: "x", err: "you need to send a valid id"},
 		{name: "Successfull", method: http.MethodPost, cartId: IdCart, values: "2"},
 	}
 	for _, tc := range tt {
@@ -97,6 +97,7 @@ func TestAddItem(t *testing.T) {
 			request, err := http.NewRequest(tc.method, path, bytes.NewBuffer(jsonData))
 			if err != nil {
 				t.Errorf("Could not create request %v", err)
+				return
 			}
 			response := httptest.NewRecorder()
 
@@ -106,30 +107,37 @@ func TestAddItem(t *testing.T) {
 
 			resp := response.Result()
 			defer resp.Body.Close()
-
+			
 			b, err := ioutil.ReadAll(resp.Body)
-			dataStruct := Request.TestResponse{}
-			if err = json.Unmarshal(b, &dataStruct); err != nil {
-				t.Fatalf("Could not encoded the response in a particular structure: %v", err)
-			}
-
 			if err != nil {
 				t.Fatalf("Could not read response: %v", err)
+				return
 			}
+			dataStruct := Request.TestResponse{}
+			if err = json.Unmarshal(b, &dataStruct); err != nil {
+				if tc.err != err.Error() {
+				t.Fatalf("Could not encoded the response in a particular structure: %v", err)
+				}
+				return
+			}
+			
 
 			if tc.err != "" {
-				if resp.StatusCode != http.StatusOK {
-					t.Errorf("Expected status bad request; got %v", resp.StatusCode)
+				if resp.StatusCode != http.StatusBadRequest {
+					t.Errorf("Expected status bad request %v ; got %v", http.StatusBadRequest, resp.StatusCode)
 				}
 
 				if dataStruct.Response != tc.err {
 					t.Errorf("expected message %q; got %q", tc.err, dataStruct.Response)
 				}
+				// if tc.err != err.Error(){
+				// 	t.Errorf("expected message %q; got %q", tc.err, err.Error())
+				// }
 				return
 			}
 
 			if resp.StatusCode != http.StatusOK {
-				t.Errorf("Expected status Created; got %v", resp.Status)
+				t.Errorf("Expected status Ok; got %v", resp.Status)
 			}
 
 		})
