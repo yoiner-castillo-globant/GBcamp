@@ -21,14 +21,21 @@ func NewCartEP(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(`{"CartId": "` + newId + `"}`))
 }
 
-func GetItemsCartEP(w http.ResponseWriter, req *http.Request) {
+func getItemsCartEP(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	pathParams := mux.Vars(req)
-	CartId := pathParams["CartId"]
+	cartId := pathParams["CartId"]
 
+	items, err := IControl.GetItems(cartId)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"Response": "you need to send a valid idCart"}`))
+	
+		return
+	}
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(IControl.GetItems(CartId))
+	json.NewEncoder(w).Encode(items)
 }
 
 func validateAddItemRequest(w http.ResponseWriter, cartId, articleId string) bool {
@@ -40,15 +47,16 @@ func validateAddItemRequest(w http.ResponseWriter, cartId, articleId string) boo
 
 	if articleId == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"Response": "you need to send an id"}`))
+		w.Write([]byte(`{"Response": "you need to send a product id"}`))
 		return false
 	}
 
 	return true
 }
-func AddItemCartEP(w http.ResponseWriter, req *http.Request) {
+
+func addItemCartEP(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
-	var article Request.PostArticle
+	article := Request.PostArticle{}
 	cartId := params["CartId"]
 
 	_ = json.NewDecoder(req.Body).Decode(&article)
@@ -69,44 +77,63 @@ func AddItemCartEP(w http.ResponseWriter, req *http.Request) {
 
 }
 
-func ChangeAmountItemEP(w http.ResponseWriter, req *http.Request) {
+func changeAmountItemEP(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
-	var article Request.PostArticle
+	article := Request.PostArticle{}
+	cartId := params["CartId"]
+
 	_ = json.NewDecoder(req.Body).Decode(&article)
-	CartId := params["CartId"]
+	
 
-	if CartId == "" {
-		w.Write([]byte(`{"Response": "you need to send an CartId"}`))
-	} else if article.ArticleId == "" {
-		w.Write([]byte(`{"Response": "you need to send an existing id in the cart"}`))
-	} else if article.Amount == 0 {
-		w.Write([]byte(`{"Response": "you need to send the product´s quantity like quantity. quantity != 0 "}`))
-	} else {
-
-		if err := IControl.ChangeItemAmount(CartId, article.ArticleId, article.Amount); err != nil {
-			w.Write([]byte(`{"Response": "you need to send an id valid"}`))
-		} else {
-			w.Write([]byte(`{"Response": "Changed successfully"}`))
-		}
+	if !validateAddItemRequest(w, cartId, article.ArticleId) {
+		return
 	}
+
+	if err := IControl.ChangeItemAmount(cartId, article.ArticleId, article.Amount); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"Response": "you need to send an existing id in the cart"}`))
+		return
+	} 
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"Response": "Changed successfully"}`))
+		
+	
 }
 
-func DeleteItemCartEP(w http.ResponseWriter, req *http.Request) {
+func deleteItemCartEP(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 	w.Header().Set("Content-Type", "application/json")
-	CartId := params["CartId"]
-	ArticleId := params["ArticleId"]
-	IControl.DeleteItem(CartId, ArticleId)
+	cartId := params["CartId"]
+	articleId := params["ArticleId"]
+
+	if !validateAddItemRequest(w, cartId, articleId) {
+		return
+	}
+
+	if err:= IControl.DeleteItem(cartId, articleId); err != nil{
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"Response": "you need to send an existing id in the cart"}`))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"done": "The product was eliminated"}`))
 
 }
 
-func DeleteItemsCartEP(w http.ResponseWriter, req *http.Request) {
+func deleteItemsCartEP(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 	w.Header().Set("Content-Type", "application/json")
-	CartId := params["CartId"]
-	IControl.DeleteAll(CartId)
+	cartId := params["CartId"]
+	if cartId == ""{
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"Response": "you need to send an CartId"}`))
+		return
+	}
+
+	IControl.DeleteAll(cartId)
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"done": "The products were eliminated"}`))
 
@@ -125,10 +152,10 @@ func LoadEndPoints() *mux.Router {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/CreateCart", NewCartEP).Methods(http.MethodGet)
-	router.HandleFunc("/AddItem/{CartId}", AddItemCartEP).Methods(http.MethodPost)
-	router.HandleFunc("/GetItems/{CartId}", GetItemsCartEP).Methods(http.MethodGet)
-	router.HandleFunc("/ChangeQuantity/{CartId}", ChangeAmountItemEP).Methods(http.MethodPut)
-	router.HandleFunc("/Delete/{CartId}/article/{ArticleId}", DeleteItemCartEP).Methods(http.MethodDelete)
-	router.HandleFunc("/Delete/{CartId}", DeleteItemsCartEP).Methods(http.MethodDelete)
+	router.HandleFunc("/AddItem/{CartId}", addItemCartEP).Methods(http.MethodPost)
+	router.HandleFunc("/GetItems/{CartId}", getItemsCartEP).Methods(http.MethodGet)
+	router.HandleFunc("/ChangeQuantity/{CartId}", changeAmountItemEP).Methods(http.MethodPut)
+	router.HandleFunc("/Delete/{CartId}/article/{ArticleId}", deleteItemCartEP).Methods(http.MethodDelete)
+	router.HandleFunc("/Delete/{CartId}", deleteItemsCartEP).Methods(http.MethodDelete)
 	return router
 }
