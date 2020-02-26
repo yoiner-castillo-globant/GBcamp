@@ -17,9 +17,10 @@ type Trainer struct {
 }
 
 func main() {
-	// Rest of the code will go here
-	// Set client options
-clientOptions := options.Client().ApplyURI("mongodb+srv://admin:admin@cluster0-wlluq.mongodb.net/test?retryWrites=true&w=majority")
+	
+// Set client options
+clientOptions := options.Client().ApplyURI("mongodb://root:example@localhost:27017/")
+//clientOptions := options.Client().ApplyURI("mongodb+srv://admin:admin@cluster0-wlluq.mongodb.net/test?retryWrites=true&w=majority")
 
 // Connect to MongoDB
 client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -173,7 +174,7 @@ for cur2.Next(context.TODO()) {
     if err != nil {
         log.Fatal(err)
     }
-
+ 
     results3 = append(results3, &elem)
 }
 
@@ -184,6 +185,11 @@ if err := cur.Err(); err != nil {
 // Close the cursor once finished
 cur2.Close(context.TODO())
 
+for _, element := range results3 {
+    // index is the index where we are
+    // element is the element from someSlice for where we are
+    fmt.Printf(" element: %+v",element)
+}
 fmt.Printf("Found multiple documents (array of pointers): %+v\n", results3)
 
 }

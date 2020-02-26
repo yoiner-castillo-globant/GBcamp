@@ -140,6 +140,7 @@ import (
 		amount 		int
 		err    		string
 	}{
+		you need to send a quantity greater than zero
 		{name: "With out {CartId}", method: http.MethodPut, cartId: "", articleId: "4", amount: 20, err: "invalid character 'p' after top-level value"},
 		{name: "With out {ArticleId}", method: http.MethodPut, cartId: IdCart, articleId: "", amount: 3, err: "you need to send a product id"},
 		{name: "With out {ArticleId} valid", method: http.MethodPut, cartId: IdCart, articleId: "x", amount: 11, err: "you need to send a valid id"},

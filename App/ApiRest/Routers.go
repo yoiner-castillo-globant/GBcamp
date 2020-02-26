@@ -1,12 +1,13 @@
 package ApiRest
 
 import (
+	"log"
 	"net/http"
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/kjk/betterguid"
-	"github.com/yoiner-castillo-globant/GBcamp/App/ApiRest/Control"
 	"github.com/yoiner-castillo-globant/GBcamp/App/Request"
+	"github.com/yoiner-castillo-globant/GBcamp/App/ApiRest/Control"
 )
 
 var IControl = Control.New()
@@ -31,7 +32,7 @@ func getItemsCartEP(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"Response": "you need to send a valid idCart"}`))
-	
+		log.Println("error: invalid idCart") 
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -42,12 +43,14 @@ func validateAddItemRequest(w http.ResponseWriter, cartId, articleId string) boo
 	if cartId == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"Response": "you need to send an CartId"}`))
+		log.Println("error: CartId not sent") 
 		return false
 	}
 
 	if articleId == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"Response": "you need to send a product id"}`))
+		log.Println("error: product id not sent") 
 		return false
 	}
 
@@ -67,8 +70,8 @@ func addItemCartEP(w http.ResponseWriter, req *http.Request) {
 
 	if err := IControl.AddItem(cartId, article.ArticleId); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"Response": "you need to send a valid id"}`))
-	
+		w.Write([]byte(`{"Response": `+err.Error()+` }`))
+		log.Println("error: product id invalid") 
 		return
 	}
 
@@ -83,15 +86,22 @@ func changeAmountItemEP(w http.ResponseWriter, req *http.Request) {
 	cartId := params["CartId"]
 
 	_ = json.NewDecoder(req.Body).Decode(&article)
-	
 
 	if !validateAddItemRequest(w, cartId, article.ArticleId) {
+		return
+	}
+
+	if article.Amount <= 0{
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"Response": "you need to send a quantity greater than zero"}`))
+		log.Println("error: quantity <= 0") 
 		return
 	}
 
 	if err := IControl.ChangeItemAmount(cartId, article.ArticleId, article.Amount); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"Response": "you need to send an existing id in the cart"}`))
+		log.Println("error: product id doesn´t exist in the cart") 
 		return
 	} 
 
@@ -114,6 +124,7 @@ func deleteItemCartEP(w http.ResponseWriter, req *http.Request) {
 	if err:= IControl.DeleteItem(cartId, articleId); err != nil{
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(`{"Response": "you need to send an existing id in the cart"}`))
+		log.Println("error: product id doesn´t exist in the cart") 
 		return
 	}
 
@@ -126,9 +137,8 @@ func deleteItemsCartEP(w http.ResponseWriter, req *http.Request) {
 	params := mux.Vars(req)
 	w.Header().Set("Content-Type", "application/json")
 	cartId := params["CartId"]
-	if cartId == ""{
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte(`{"Response": "you need to send an CartId"}`))
+
+	if !validateAddItemRequest(w, cartId, "articleId") {
 		return
 	}
 
@@ -143,6 +153,7 @@ func LoadServer() error {
 
 	err := http.ListenAndServe(":3000", LoadEndPoints())
 	if err != nil {
+		log.Println(err) 
 		return err
 	}
 	return nil

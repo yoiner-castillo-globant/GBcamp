@@ -34,7 +34,6 @@ func (md *MemoryDB) Len() int {
 
 // Create a new Element, if it doesn't exist
 func (md *MemoryDB) Create(key string, value interface{}) error {
-	defer md.SaveMapInFile()
 	md.mtx.Lock()
 	if md.data[key] == "" || md.data[key] == nil {
 		md.data[key] = value
@@ -43,7 +42,7 @@ func (md *MemoryDB) Create(key string, value interface{}) error {
 		return errors.New("Error, cannot be created, the key already exists")
 	}
 	md.mtx.Unlock()
-	return nil
+	return md.SaveMapInFile()
 }
 
 // Retrieve an Element if it exist
@@ -56,7 +55,6 @@ func (md *MemoryDB) Retrieve(key string) (interface{}, error) {
 
 // Update the Element if the key exist
 func (md *MemoryDB) Update(key string, value interface{}) error {
-	defer md.SaveMapInFile()
 	md.mtx.Lock()
 	if md.data[key] != nil {
 		md.data[key] = value
@@ -65,12 +63,12 @@ func (md *MemoryDB) Update(key string, value interface{}) error {
 		return errors.New("No information was found with the key received")
 	}
 	md.mtx.Unlock()
-	return nil
+	return md.SaveMapInFile()
 }
 
 //Delete an Element if the key exist
 func (md *MemoryDB) Delete(key string) error {
-	defer md.SaveMapInFile()
+	
 	md.mtx.Lock()
 	if md.data[key] != nil {
 		delete(md.data, key)
@@ -79,18 +77,20 @@ func (md *MemoryDB) Delete(key string) error {
 		return errors.New("No information was found with the key received")
 	}
 	md.mtx.Unlock()
-	return nil
+	return md.SaveMapInFile()
 }
 
-func (md *MemoryDB) SaveMapInFile() {
+func (md *MemoryDB) SaveMapInFile() error {
 	jsonString, _ := json.Marshal(md.data)
 	if err := ioutil.WriteFile(Constants.FilePath, jsonString, 0644); err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
-func (md *MemoryDB) ReadMapFromFile() {
+func (md *MemoryDB) ReadMapFromFile() error {
 	dataLikeBytes, err := ioutil.ReadFile(Constants.FilePath)
 	if err = json.Unmarshal(dataLikeBytes, &md.data); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
